@@ -1,4 +1,4 @@
-# turboLinks
+# appTurboLinks
 SPA (Single Page Application) like... but keeping your code in controll.
 
 - SPA without the complexity of JavaScript framework.
