@@ -53,7 +53,8 @@ app.turbolinks.loadPage = function(url, obj) {
 	var progressBar = document.getElementById('pageProgress');
 	if (progressBar) {
 		progressBar.style.display = 'block';
-		setTimeout(function () {progressBar.style.width = '5%';}, 50);
+		var progressWidth = Math.floor(Math.random() * Math.floor(50))+'%';
+		setTimeout(function () {progressBar.style.width = progressWidth;}, 50);
 	}
 
 	appXhr({
@@ -62,14 +63,10 @@ app.turbolinks.loadPage = function(url, obj) {
 		renderJs: false,
 		url: url,
 		onloadstart: function(e) {
-
+			app.turbolinks.setUrlHistory(url);
 		},
-		onprogress: function(e) {
-			// if (progressBar) {if (e.lengthComputable) {progressBar.style.width = ((e.loaded * 100) / e.total) + '%';}}
-		},
-		onloadend: function(e) {
-			// if (progressBar) {}
-		},
+		onprogress: function(e) {},
+		onloadend: function(e) {},
 		onSuccess: function(response) {
 			app.turbolinks.markHeadNodes(response, obj);
 			app.turbolinks.setNewHead(response, obj);
@@ -77,15 +74,21 @@ app.turbolinks.loadPage = function(url, obj) {
 				if (obj.loadCounter <= 0) {
 					app.turbolinks.removeOldHead(response);
 					app.turbolinks.setBody(response);
-					app.turbolinks.setUrlHistory(url);
 					app.turbolinks.setProgressBar();
-					setTimeout(function () {
-						var progressBar = document.getElementById('pageProgress'); if (progressBar) {
+					var progressBar = document.getElementById('pageProgress');
+					progressBar.style.width = progressWidth;
+					if (progressBar) {
+						setTimeout(function () {
 							progressBar.style.width = '100%';
-							setTimeout(function () {progressBar.style.display = 'none'; progressBar.style.width = 0;}, 350);
-						}
-					}, 50);
+							setTimeout(function () {progressBar.style.display = 'none'; progressBar.style.width = '0';}, 350);
+						}, 50);
+					}
+					// console.log(window.location);
 
+					document.body.scrollTop = document.documentElement.scrollTop = 0;
+					if (window.location.hash) {
+						window.location.hash = window.location.hash;
+					}
 					clearInterval(t);
 				}
 			}, 5);
@@ -99,7 +102,7 @@ app.turbolinks.setProgressBar = function() {
 		var body = document.documentElement.querySelector('body');
 		var div = document.createElement('div');
 		div.id = 'pageProgress';
-		div.style.cssText = 'position: fixed; top: 0; height: 3px; background: yellow; width: 0; transition: width 0.3s; z-index:9999;'
+		div.style.cssText = 'position: fixed; top: 0; height: 2px; background: #F63805; width: 0; transition: width 0.3s; z-index:9999;';
 		body.appendChild(div);
 	}
 };
