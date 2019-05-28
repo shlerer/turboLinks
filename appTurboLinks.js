@@ -83,8 +83,6 @@ app.turbolinks.loadPage = function(url, obj) {
 							setTimeout(function () {progressBar.style.display = 'none'; progressBar.style.width = '0';}, 350);
 						}, 50);
 					}
-					// console.log(window.location);
-
 					document.body.scrollTop = document.documentElement.scrollTop = 0;
 					if (window.location.hash) {
 						window.location.hash = window.location.hash;
