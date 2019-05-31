@@ -15,7 +15,13 @@
  */
 
 window.addEventListener("popstate", function(e) {
-	app.turbolinks.loadPage(e.state.url, {loadCounter: 0});
+	if (!e.state) { // Fallback
+		window.location.href = '';
+	}
+	else {
+		app.turbolinks.loadPage(e.state.url, {loadCounter: 0});
+	}
+
 });
 
 app.turbolinks = {};
@@ -67,7 +73,10 @@ app.turbolinks.loadPage = function(url, obj) {
 		},
 		onprogress: function(e) {},
 		onloadend: function(e) {},
-		onSuccess: function(response) {
+		onSuccess: function(response, xhr) {
+			if (url !== xhr.responseURL) {
+				app.turbolinks.setUrlHistory(xhr.responseURL);
+			}
 			app.turbolinks.markHeadNodes(response, obj);
 			app.turbolinks.setNewHead(response, obj);
 			let t = setInterval(function(){
@@ -138,7 +147,7 @@ app.turbolinks.removeOldHead = function(response, obj) {
 	for (let i = document.head.childNodes.length - 1; i >= 0; i--) {
 		let child = document.head.childNodes[i];
 		// Remove old children
-		if (child.getAttribute('data-turbolinks_remove_node')) {
+		if (child['turbolinks_remove_node'] === 1) {
 			child.parentNode.removeChild(child);
 		}
 	}
@@ -146,9 +155,10 @@ app.turbolinks.removeOldHead = function(response, obj) {
 
 app.turbolinks.setNewHead = function(response, obj) {
 	var newHead = response.documentElement.querySelector('head');
+
 	for (newChild of newHead.childNodes) {
 		// Modify new childrens
-		if (!newChild.getAttribute('data-turbolinks_remove_node')) {
+		if (!(newChild['turbolinks_remove_node'] === 1)) {
 			obj.loadCounter++;
 			if (newChild.nodeName === 'SCRIPT') {
 				var node = document.createElement('script');
@@ -172,13 +182,24 @@ app.turbolinks.setNewHead = function(response, obj) {
 				};
 			}
 			else {
-				var node = document.createElement(newChild.nodeName);
-				for (let attr of newChild.attributes) {
-					node.setAttribute(attr.name, attr.value);
+				if (newChild.nodeType === 1) {
+					var node = document.createElement(newChild.nodeName);
+					for (let attr of newChild.attributes) {
+						node.setAttribute(attr.name, attr.value);
+					}
 				}
+				else if (newChild.nodeType === 3) {
+					var node = document.createTextNode(newChild.nodeValue);
+				}
+				else if (newChild.nodeType === 4) {
+					var node = document.createCDATASection(newChild.nodeValue);
+				}
+				else if (newChild.nodeType === 8) {
+					var node = document.createComment(newChild.nodeValue);
+				}
+
 				obj.loadCounter--;
 			}
-
 			document.head.appendChild(node);
 		}
 	}
@@ -227,14 +248,14 @@ app.turbolinks.markHeadNodes = function(response, obj) {
 
 			if (!removeFlag) {
 				// (Not modified) Remove from new list
-				newChild.setAttribute('data-turbolinks_remove_node', 1);
+				newChild['turbolinks_remove_node'] = 1;
 				break;
 			}
 		}
 
 		if (removeFlag) {
 			// (modified) Remove from old list
-			oldChild.setAttribute('data-turbolinks_remove_node', 1);
+			oldChild['turbolinks_remove_node'] = 1
 		}
 	}
 };
